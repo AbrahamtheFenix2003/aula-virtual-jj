@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
 import type { Role, Belt, Stripe } from "@/generated/prisma";
+import { authConfig } from "./auth.config";
 
 declare module "next-auth" {
   interface Session {
@@ -39,12 +40,9 @@ declare module "@auth/core/jwt" {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
   providers: [
     Credentials({
       name: "credentials",
@@ -99,6 +97,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    ...authConfig.callbacks,
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id!;
@@ -110,7 +109,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (token) {
+      if (token && session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.belt = token.belt;
@@ -121,3 +120,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
 });
+

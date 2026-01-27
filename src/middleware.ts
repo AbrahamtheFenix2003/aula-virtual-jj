@@ -1,5 +1,8 @@
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "@/lib/auth.config";
 import { NextResponse } from "next/server";
+
+const { auth } = NextAuth(authConfig);
 
 // Rutas públicas que no requieren autenticación
 const publicRoutes = ["/", "/login", "/register", "/forgot-password"];
@@ -35,7 +38,7 @@ export default auth((req) => {
     );
   }
 
-  const userRole = req.auth?.user?.role;
+  const userRole = req.auth?.user?.role as string;
 
   // Verificar acceso a rutas de instructor
   if (instructorRoutes.some((route) => pathname.startsWith(route))) {
@@ -57,3 +60,4 @@ export default auth((req) => {
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
 };
+
