@@ -1,0 +1,84 @@
+# ================================
+# DOCKER COMPOSE - DESARROLLO
+# App + PostgreSQL con hot-reload
+# ================================
+
+services:
+  # =============================
+  # Aplicación Next.js
+  # =============================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: aula-virtual-app-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Montar código fuente para hot-reload
+      - .:/app
+      # Excluir node_modules del host (usar los del contenedor)
+      - /app/node_modules
+      # Excluir .next para evitar conflictos
+      - /app/.next
+      # Excluir generated para evitar conflictos
+      - /app/src/generated
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/aula_virtual_jj?schema=public
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=development-secret-change-in-production-min-32-chars
+      # Google Drive (configurar con tus credenciales)
+      - GOOGLE_SERVICE_ACCOUNT_EMAIL=${GOOGLE_SERVICE_ACCOUNT_EMAIL:-}
+      - GOOGLE_PRIVATE_KEY=${GOOGLE_PRIVATE_KEY:-}
+      - GOOGLE_DRIVE_FOLDER_ID=${GOOGLE_DRIVE_FOLDER_ID:-}
+      # Stripe (configurar con tus credenciales)
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - aula-network
+
+  # =============================
+  # Base de datos PostgreSQL
+  # =============================
+  db:
+    image: postgres:16-alpine
+    container_name: aula-virtual-db-dev
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: aula_virtual_jj
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      # Script de inicialización (opcional)
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d aula_virtual_jj"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - aula-network
+
+# =============================
+# Volúmenes persistentes
+# =============================
+volumes:
+  postgres_data_dev:
+    driver: local
+
+# =============================
+# Redes
+# =============================
+networks:
+  aula-network:
+    driver: bridge

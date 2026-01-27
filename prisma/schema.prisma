@@ -1,0 +1,435 @@
+// ============================================
+// AULA VIRTUAL JIU-JITSU - PRISMA SCHEMA
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  ALUMNO
+  INSTRUCTOR
+  ADMIN
+}
+
+enum Belt {
+  BLANCA
+  AZUL
+  PURPURA
+  MARRON
+  NEGRA
+  CORAL
+  ROJA
+}
+
+enum Stripe {
+  CERO
+  UNO
+  DOS
+  TRES
+  CUATRO
+}
+
+enum ClassType {
+  GI
+  NOGI
+  COMPETICION
+  INFANTIL
+  FUNDAMENTALS
+  AVANZADO
+}
+
+enum PaymentType {
+  MENSUALIDAD
+  TRIMESTRAL
+  SEMESTRAL
+  ANUAL
+  CLASE_SUELTA
+  EXAMEN
+  EQUIPAMIENTO
+}
+
+enum PaymentStatus {
+  PENDIENTE
+  COMPLETADO
+  FALLIDO
+  REEMBOLSADO
+  CANCELADO
+}
+
+enum PaymentMethod {
+  STRIPE
+  EFECTIVO
+  TRANSFERENCIA
+}
+
+enum VideoCategory {
+  GUARDIA
+  PASE_DE_GUARDIA
+  MONTADA
+  ESPALDA
+  LATERAL
+  SUMISION
+  DEFENSA
+  BARRIDA
+  TAKEDOWN
+  ESCAPE
+  DRILL
+  COMPETICION
+}
+
+enum ExamStatus {
+  PROGRAMADO
+  EN_CURSO
+  COMPLETADO
+  CANCELADO
+}
+
+enum ExamResult {
+  PENDIENTE
+  APROBADO
+  REPROBADO
+  NO_PRESENTADO
+}
+
+// ============================================
+// MODELOS PRINCIPALES
+// ============================================
+
+model Academy {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  logo      String?
+  address   String?
+  phone     String?
+  email     String?
+  timezone  String   @default("America/Mexico_City")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users   User[]
+  videos  Video[]
+  exams   Exam[]
+  classes ClassSchedule[]
+
+  @@index([slug])
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  emailVerified    DateTime?
+  password         String // Hashed con bcrypt
+  name             String
+  phone            String?
+  avatar           String?
+  role             Role      @default(ALUMNO)
+  belt             Belt      @default(BLANCA)
+  stripe           Stripe    @default(CERO)
+  dateOfBirth      DateTime?
+  emergencyContact String?
+  emergencyPhone   String?
+  notes            String? // Notas del instructor sobre el alumno
+  isActive         Boolean   @default(true)
+  lastLogin        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relaciones
+  academyId String
+  academy   Academy @relation(fields: [academyId], references: [id])
+
+  // Asistencias registradas POR este usuario
+  attendancesRegistered Attendance[] @relation("RegisteredBy")
+  // Asistencias DE este usuario
+  attendances           Attendance[] @relation("AttendanceUser")
+
+  payments          Payment[]
+  videoProgress     VideoProgress[]
+  videosUploaded    Video[]         @relation("UploadedBy")
+  examRegistrations ExamStudent[]
+
+  // Para graduaciones
+  promotedStudents BeltPromotion[] @relation("PromotedBy")
+  myPromotions     BeltPromotion[] @relation("StudentPromoted")
+
+  @@index([email])
+  @@index([academyId])
+  @@index([role])
+  @@index([belt])
+}
+
+model Attendance {
+  id        String    @id @default(cuid())
+  date      DateTime  @db.Date
+  classType ClassType
+  notes     String?
+  createdAt DateTime  @default(now())
+
+  // Usuario que asistió
+  userId String
+  user   User   @relation("AttendanceUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Usuario que registró la asistencia
+  registeredById String
+  registeredBy   User   @relation("RegisteredBy", fields: [registeredById], references: [id])
+
+  // Clase a la que asistió (opcional, para más detalle)
+  classScheduleId String?
+  classSchedule   ClassSchedule? @relation(fields: [classScheduleId], references: [id])
+
+  @@unique([userId, date, classType]) // Evita duplicados
+  @@index([userId])
+  @@index([date])
+  @@index([classType])
+}
+
+model ClassSchedule {
+  id          String    @id @default(cuid())
+  name        String // "Clase GI Mañana"
+  classType   ClassType
+  dayOfWeek   Int // 0-6 (Domingo-Sábado)
+  startTime   String // "10:00"
+  endTime     String // "11:30"
+  maxCapacity Int?
+  isActive    Boolean   @default(true)
+
+  academyId String
+  academy   Academy @relation(fields: [academyId], references: [id])
+
+  instructorId String?
+
+  attendances Attendance[]
+
+  @@index([academyId])
+  @@index([dayOfWeek])
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  amount      Decimal       @db.Decimal(10, 2)
+  currency    String        @default("MXN")
+  type        PaymentType
+  status      PaymentStatus @default(PENDIENTE)
+  method      PaymentMethod @default(STRIPE)
+  description String?
+
+  // Para mensualidades
+  periodStart DateTime?
+  periodEnd   DateTime?
+
+  // Stripe
+  stripePaymentId  String? @unique
+  stripeInvoiceId  String?
+  stripeReceiptUrl String?
+
+  // Metadatos
+  metadata Json?
+  notes    String? // Notas internas
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  paidAt    DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Para pagos de examen
+  examStudentId String?
+  examStudent   ExamStudent? @relation(fields: [examStudentId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([stripePaymentId])
+}
+
+model Video {
+  id          String  @id @default(cuid())
+  title       String
+  description String? @db.Text
+
+  // Google Drive
+  driveFileId   String // ID del archivo en Google Drive
+  driveFolderId String? // Carpeta donde está el video
+  mimeType      String  @default("video/mp4")
+  thumbnail     String? // URL de thumbnail
+  duration      Int // Duración en segundos
+  fileSize      Int? // Tamaño en bytes
+
+  // Clasificación
+  category VideoCategory
+  minBelt  Belt          @default(BLANCA) // Nivel mínimo requerido
+  maxBelt  Belt? // Nivel máximo (null = sin límite)
+  tags     String[] // Tags adicionales
+
+  // Estado
+  isPublished Boolean @default(false)
+  isFeatured  Boolean @default(false)
+  viewCount   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  academyId String
+  academy   Academy @relation(fields: [academyId], references: [id])
+
+  uploadedById String
+  uploadedBy   User   @relation("UploadedBy", fields: [uploadedById], references: [id])
+
+  progress VideoProgress[]
+
+  @@index([academyId])
+  @@index([category])
+  @@index([minBelt])
+  @@index([isPublished])
+  @@index([createdAt])
+}
+
+model VideoProgress {
+  id          String   @id @default(cuid())
+  progress    Int      @default(0) // Segundos vistos
+  percentage  Int      @default(0) // Porcentaje (0-100)
+  completed   Boolean  @default(false)
+  lastWatched DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  videoId String
+  video   Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+  @@index([userId])
+  @@index([videoId])
+}
+
+model Exam {
+  id          String   @id @default(cuid())
+  title       String // "Examen Cinturón Azul - Marzo 2024"
+  date        DateTime
+  location    String?
+  description String?  @db.Text
+
+  beltFrom Belt // Cinturón actual requerido
+  beltTo   Belt // Cinturón al que se promueve
+
+  maxStudents Int?
+  examFee     Decimal?   @db.Decimal(10, 2)
+  status      ExamStatus @default(PROGRAMADO)
+
+  // Requisitos
+  minAttendances     Int? // Asistencias mínimas requeridas
+  minVideosCompleted Int? // Videos completados requeridos
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  academyId String
+  academy   Academy @relation(fields: [academyId], references: [id])
+
+  students ExamStudent[]
+
+  @@index([academyId])
+  @@index([date])
+  @@index([status])
+  @@index([beltTo])
+}
+
+model ExamStudent {
+  id           String     @id @default(cuid())
+  result       ExamResult @default(PENDIENTE)
+  score        Int? // Puntuación 0-100
+  feedback     String? // Feedback del evaluador
+  registeredAt DateTime   @default(now())
+  evaluatedAt  DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  examId String
+  exam   Exam   @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  payments Payment[]
+
+  @@unique([userId, examId])
+  @@index([userId])
+  @@index([examId])
+  @@index([result])
+}
+
+model BeltPromotion {
+  id         String   @id @default(cuid())
+  fromBelt   Belt
+  fromStripe Stripe
+  toBelt     Belt
+  toStripe   Stripe
+  promotedAt DateTime @default(now())
+  notes      String?
+
+  studentId String
+  student   User   @relation("StudentPromoted", fields: [studentId], references: [id])
+
+  promotedById String
+  promotedBy   User   @relation("PromotedBy", fields: [promotedById], references: [id])
+
+  examId String? // Opcional: si la promoción fue por examen
+
+  @@index([studentId])
+  @@index([promotedAt])
+}
+
+// ============================================
+// MODELOS AUXILIARES - AUTH
+// ============================================
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+// ============================================
+// MODELOS AUXILIARES - SISTEMA
+// ============================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String // "USER_CREATED", "PAYMENT_COMPLETED", etc.
+  entity    String // "User", "Payment", etc.
+  entityId  String
+  userId    String? // Quien realizó la acción
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}

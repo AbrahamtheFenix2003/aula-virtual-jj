@@ -1,0 +1,84 @@
+# ================================
+# .dockerignore
+# Archivos a excluir del contexto de build
+# ================================
+
+# Dependencias
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build de Next.js
+.next
+out
+build
+dist
+
+# Testing
+coverage
+.nyc_output
+
+# Entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docker (evitar recursión)
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Logs
+logs
+*.log
+
+# Temporary
+tmp
+temp
+.temp
+
+# Documentación
+*.md
+!README.md
+docs
+
+# Tests
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+jest.config.*
+vitest.config.*
+
+# Prisma migrations en desarrollo
+prisma/migrations/*_migration_lock.toml
+
+# Backups
+backups
+*.sql
+*.dump
+
+# Archivos de configuración local
+.eslintcache
+.pretterrc
+tsconfig.tsbuildinfo

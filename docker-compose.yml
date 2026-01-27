@@ -1,0 +1,132 @@
+# ================================
+# DOCKER COMPOSE - PRODUCCIÓN
+# App + PostgreSQL + Nginx + Certbot
+# ================================
+
+services:
+  # =============================
+  # Aplicación Next.js
+  # =============================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aula-virtual-app
+    restart: always
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?schema=public
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      # Google Drive
+      - GOOGLE_SERVICE_ACCOUNT_EMAIL=${GOOGLE_SERVICE_ACCOUNT_EMAIL}
+      - GOOGLE_PRIVATE_KEY=${GOOGLE_PRIVATE_KEY}
+      - GOOGLE_DRIVE_FOLDER_ID=${GOOGLE_DRIVE_FOLDER_ID}
+      # Stripe
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      # Resend
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - EMAIL_FROM=${EMAIL_FROM}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - aula-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =============================
+  # Base de datos PostgreSQL
+  # =============================
+  db:
+    image: postgres:16-alpine
+    container_name: aula-virtual-db
+    restart: always
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # Backup automático (opcional)
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - aula-network
+
+  # =============================
+  # Nginx Reverse Proxy
+  # =============================
+  nginx:
+    image: nginx:alpine
+    container_name: aula-virtual-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot_etc:/etc/letsencrypt:ro
+      - certbot_var:/var/lib/letsencrypt
+      - certbot_www:/var/www/certbot:ro
+    depends_on:
+      - app
+    networks:
+      - aula-network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =============================
+  # Certbot para SSL
+  # =============================
+  certbot:
+    image: certbot/certbot:latest
+    container_name: aula-virtual-certbot
+    volumes:
+      - certbot_etc:/etc/letsencrypt
+      - certbot_var:/var/lib/letsencrypt
+      - certbot_www:/var/www/certbot
+    depends_on:
+      - nginx
+    # Renovación automática cada 12 horas
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done;'"
+
+# =============================
+# Volúmenes persistentes
+# =============================
+volumes:
+  postgres_data:
+    driver: local
+  certbot_etc:
+    driver: local
+  certbot_var:
+    driver: local
+  certbot_www:
+    driver: local
+
+# =============================
+# Redes
+# =============================
+networks:
+  aula-network:
+    driver: bridge
