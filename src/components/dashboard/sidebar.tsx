@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BELT_NAMES, BELT_COLORS } from "@/types";
 
 interface NavItem {
@@ -194,6 +194,7 @@ function MobileSidebar() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-64 p-0 bg-sidebar">
+        <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
         {/* Header */}
         <div className="flex h-16 items-center px-4 border-b border-sidebar-border">
           <Link href="/videos" className="flex items-center gap-2">
