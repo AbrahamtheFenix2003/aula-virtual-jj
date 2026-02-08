@@ -124,8 +124,20 @@ export const createAttendanceSchema = z.object({
   notes: z.string().optional(),
 });
 
+// Constantes para limites de bulk operations
+export const BULK_LIMITS = {
+  MAX_ATTENDANCE_USERS: 100,
+  MAX_BULK_OPERATIONS: 50,
+} as const;
+
 export const bulkAttendanceSchema = z.object({
-  userIds: z.array(z.string()).min(1),
+  userIds: z
+    .array(z.string())
+    .min(1, "Debe seleccionar al menos un usuario")
+    .max(
+      BULK_LIMITS.MAX_ATTENDANCE_USERS,
+      `Maximo ${BULK_LIMITS.MAX_ATTENDANCE_USERS} usuarios por operacion`
+    ),
   date: z.coerce.date(),
   classType: z.enum([
     "GI",

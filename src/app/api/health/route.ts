@@ -1,30 +1,10 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
-  try {
-    // Verificar conexión a la base de datos
-    await prisma.$queryRaw`SELECT 1`;
+/**
+ * DEPRECATED: Este endpoint se movio a /api/v1/health
+ * Este archivo mantiene compatibilidad con clientes existentes.
+ */
 
-    return NextResponse.json(
-      {
-        status: "healthy",
-        timestamp: new Date().toISOString(),
-        database: "connected",
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Health check failed:", error);
-
-    return NextResponse.json(
-      {
-        status: "unhealthy",
-        timestamp: new Date().toISOString(),
-        database: "disconnected",
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 503 }
-    );
-  }
+export async function GET(request: NextRequest) {
+  return NextResponse.redirect(new URL("/api/v1/health", request.url), 308);
 }

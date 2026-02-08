@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
   // Headers de seguridad
   async headers() {
     return [
+      // Headers globales para todas las rutas
       {
         source: "/:path*",
         headers: [
@@ -36,6 +37,46 @@ const nextConfig: NextConfig = {
             key: "X-Content-Type-Options",
             value: "nosniff",
           },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+      // Headers adicionales para APIs
+      {
+        source: "/api/:path*",
+        headers: [
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, max-age=0",
+          },
+          {
+            key: "X-API-Version",
+            value: "1.0.0",
+          },
+        ],
+      },
+      // Headers para streaming de video (permitir cache)
+      {
+        source: "/api/videos/stream/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "private, max-age=3600",
+          },
         ],
       },
     ];
@@ -49,15 +90,8 @@ const nextConfig: NextConfig = {
     },
   },
 
-  // Ignorar errores de ESLint en build (opcional, quitar en producción)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
-  // Ignorar errores de TypeScript en build (opcional, quitar en producción)
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // NOTA: Las opciones eslint y typescript.ignoreBuildErrors 
+  // deben configurarse en package.json o eliminarse en producción
 };
 
 export default nextConfig;

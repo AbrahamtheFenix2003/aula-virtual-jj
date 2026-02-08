@@ -15,20 +15,22 @@ COPY package.json package-lock.json* ./
 # Instalar todas las dependencias (incluyendo devDependencies)
 RUN npm install
 
-# Copiar prisma schema para generar cliente
+# Copiar prisma schema
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 
-# Generar cliente Prisma
-RUN npx prisma generate
+# Copiar script de entrypoint
+COPY docker/entrypoint-dev.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # El código fuente se monta como volumen en docker-compose
 # No copiamos src aquí para permitir hot-reload
+# El cliente Prisma se genera en el entrypoint después del montaje de volúmenes
 
 ENV NODE_ENV=development
 ENV NEXT_TELEMETRY_DISABLED=1
 
 EXPOSE 3000
 
-# Comando para desarrollo con hot-reload
-CMD ["npm", "run", "dev"]
+# Usar entrypoint que genera Prisma después del montaje de volúmenes
+ENTRYPOINT ["/entrypoint.sh"]

@@ -1,140 +1,116 @@
 # AGENTS.md - Aula Virtual Jiu-Jitsu
 
-This document provides guidelines for AI coding agents working in this codebase.
+Guidelines for AI coding agents working in this Next.js 16 + TypeScript + Prisma 7 codebase.
 
-## Project Overview
+## Tech Stack
+- **Framework**: Next.js 16 (App Router), React 19, TypeScript 5 (strict)
+- **UI**: Tailwind CSS 4, shadcn/ui (new-york style), Lucide icons
+- **Database**: PostgreSQL + Prisma 7 with `@prisma/adapter-pg`
+- **Auth**: NextAuth.js v5 (Auth.js) with JWT strategy
+- **Forms**: React Hook Form + Zod 4 validation
 
-A virtual classroom platform for Jiu-Jitsu academies built with:
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript 5 (strict mode)
-- **UI**: React 19, Tailwind CSS 4, shadcn/ui (new-york style)
-- **Database**: PostgreSQL with Prisma 7.3
-- **Auth**: NextAuth.js v5 (Auth.js) with credentials provider
-- **Forms**: React Hook Form + Zod validation
-- **Icons**: Lucide React
-
-## Build/Lint/Test Commands
+## Commands
 
 ```bash
 # Development
-npm run dev              # Start dev server (http://localhost:3000)
-
-# Production
-npm run build            # Build for production
-npm run start            # Start production server
+npm run dev                    # Start dev server (localhost:3000)
+npm run build && npm run start # Production build
 
 # Linting
-npm run lint             # Run ESLint
+npm run lint                   # ESLint (Next.js core-web-vitals + typescript)
 
 # Database
-npx prisma generate      # Generate Prisma client
-npx prisma db push       # Push schema to database
-npx prisma studio        # Open Prisma Studio
+npm run db:generate            # Generate Prisma client
+npm run db:push                # Push schema to database
+npm run db:migrate             # Create migration (dev)
+npm run db:seed                # Seed database
+npm run db:studio              # Open Prisma Studio
 
-# No test framework configured yet
-# When adding tests, use Vitest:
-# npm run test             # Run all tests
-# npm run test -- path/to/file.test.ts  # Run single test file
+# Docker
+npm run docker:dev             # Start dev environment with hot-reload
+npm run docker:dev:down        # Stop dev environment
+
+# Tests (not configured - when adding, use Vitest)
+# npm run test                 # Run all tests
+# npm run test -- path/to/file.test.ts  # Single test
 ```
 
 ## Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router
+├── app/                    # Next.js App Router pages & API routes
 │   ├── (auth)/             # Auth route group (login, register)
-│   ├── (dashboard)/        # Dashboard route group
-│   ├── api/                # API routes
-│   ├── globals.css         # Global styles + Tailwind
-│   └── layout.tsx          # Root layout
+│   ├── (dashboard)/        # Protected dashboard routes
+│   └── api/                # API routes
 ├── components/
-│   ├── dashboard/          # Dashboard-specific components
-│   └── ui/                 # shadcn/ui components (DO NOT MODIFY)
-├── generated/
-│   └── prisma/             # Generated Prisma client
-├── lib/                    # Utilities and configurations
-│   ├── auth.ts             # NextAuth configuration
+│   ├── dashboard/          # Dashboard components
+│   └── ui/                 # shadcn/ui (DO NOT MODIFY - use CLI to add)
+├── generated/prisma/       # Generated Prisma client (auto-generated)
+├── lib/
+│   ├── auth.ts             # NextAuth config + session types
 │   ├── prisma.ts           # Prisma client singleton
-│   ├── utils.ts            # Utility functions (cn helper)
-│   └── validations/        # Zod validation schemas
-└── types/                  # TypeScript types and constants
+│   ├── utils.ts            # cn() helper
+│   └── validations/        # Zod schemas
+└── types/                  # TypeScript types & constants
 ```
 
-## Code Style Guidelines
-
-### TypeScript
-
-- **Strict mode enabled**: Always use proper types, avoid `any`
-- Use type inference where obvious, explicit types for function params/returns
-- Import generated Prisma types from `@/generated/prisma`
-- Use `type` keyword for type-only imports: `import type { Role } from "@/generated/prisma"`
-
-### Naming Conventions
+## Naming Conventions
 
 | Element | Convention | Example |
 |---------|------------|---------|
-| Files (components) | kebab-case | `sidebar.tsx`, `video-card.tsx` |
-| Files (utilities) | camelCase | `utils.ts`, `googleDrive.ts` |
-| Components | PascalCase | `DashboardSidebar`, `VideoCard` |
-| Functions | camelCase | `canAccessBeltContent`, `getVideoStream` |
-| Constants | UPPER_SNAKE_CASE | `BELT_ORDER`, `BELT_COLORS` |
-| Types/Interfaces | PascalCase | `SessionUser`, `ApiResponse` |
-| Zod schemas | camelCase + Schema suffix | `loginSchema`, `createVideoSchema` |
-| Enums (Prisma) | UPPER_SNAKE_CASE | `ALUMNO`, `INSTRUCTOR`, `ADMIN` |
+| Component files | kebab-case | `video-card.tsx` |
+| Utility files | camelCase | `googleDrive.ts` |
+| Components | PascalCase | `VideoCard` |
+| Functions/variables | camelCase | `canAccessContent` |
+| Constants | UPPER_SNAKE | `BELT_ORDER` |
+| Types/Interfaces | PascalCase | `SessionUser` |
+| Zod schemas | camelCase + Schema | `loginSchema` |
+| Prisma enums | UPPER_SNAKE | `ALUMNO`, `INSTRUCTOR` |
 
-### Import Order
+## Import Order
 
-Organize imports in this order:
 ```typescript
-// 1. React/Next.js core
+// 1. React/Next.js
 import { useState } from "react";
 import { NextRequest, NextResponse } from "next/server";
-import Link from "next/link";
 
-// 2. Third-party libraries
+// 2. Third-party
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Video } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-// 3. Internal aliases (@/)
+// 3. Internal (@/ alias)
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { loginSchema, type LoginInput } from "@/lib/validations";
-import type { Role, Belt } from "@/generated/prisma";
+import type { Role } from "@/generated/prisma";
 
-// 4. Relative imports (rare, prefer aliases)
-import { LocalComponent } from "./local-component";
+// 4. Relative (avoid when possible)
+import { LocalThing } from "./local";
 ```
 
-### Component Patterns
+## Component Patterns
 
-**Client Components**:
 ```typescript
+// Client Component
 "use client";
-
 import { useState } from "react";
-// ... imports
 
-export function ComponentName({ prop1, prop2 }: Props) {
-  const [state, setState] = useState<Type>(initialValue);
-  // ...
+export function MyComponent({ prop }: Props) {
+  const [state, setState] = useState<Type>(initial);
+  return <div>...</div>;
 }
-```
 
-**Server Components** (default):
-```typescript
+// Server Component (default - no directive needed)
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 
-export default async function PageName() {
+export default async function Page() {
   const session = await auth();
-  // ...
+  return <div>...</div>;
 }
 ```
 
-### API Routes
+## API Routes
 
 ```typescript
 import { NextRequest, NextResponse } from "next/server";
@@ -150,27 +126,40 @@ export async function GET(
     if (!session?.user) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
-    
     const { id } = await params;
-    // ... logic
-    
-    return NextResponse.json({ data: result });
+    const data = await prisma.model.findUnique({ where: { id } });
+    return NextResponse.json({ data });
   } catch (error) {
     console.error("Error:", error);
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
 ```
 
-### Styling
+## Database Access
 
-- Use Tailwind CSS utility classes
-- Use `cn()` helper from `@/lib/utils` for conditional classes
-- Follow shadcn/ui patterns for component styling
-- Use CSS variables defined in `globals.css` for theming
+```typescript
+import { prisma } from "@/lib/prisma";
+
+// Always use select to limit fields
+const user = await prisma.user.findUnique({
+  where: { id },
+  select: { id: true, email: true, name: true, role: true },
+});
+```
+
+## Form Validation
+
+```typescript
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, type LoginInput } from "@/lib/validations";
+
+const { register, handleSubmit, formState: { errors, isSubmitting } } = 
+  useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
+```
+
+## Styling
 
 ```typescript
 import { cn } from "@/lib/utils";
@@ -182,69 +171,19 @@ import { cn } from "@/lib/utils";
 )} />
 ```
 
-### Form Validation
+## Key Rules
 
-Use Zod schemas with React Hook Form:
-```typescript
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginInput } from "@/lib/validations";
-
-const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginInput>({
-  resolver: zodResolver(loginSchema),
-});
-```
-
-### Error Handling
-
-- API routes: try/catch with structured JSON responses
-- Client: Display errors in UI with proper styling
-- Use `console.error` for server-side logging
-- Validation errors: Return from Zod schemas with Spanish messages
-
-### Database Access
-
-```typescript
-import { prisma } from "@/lib/prisma";
-
-// Always use select to limit returned fields
-const user = await prisma.user.findUnique({
-  where: { id },
-  select: {
-    id: true,
-    email: true,
-    name: true,
-    role: true,
-  },
-});
-```
-
-## shadcn/ui Components
-
-- Located in `src/components/ui/`
-- **DO NOT modify** these files directly
-- Add new components via CLI: `npx shadcn@latest add [component]`
-- Components use the "new-york" style variant
-
-## Authentication
-
-- NextAuth v5 with JWT strategy
-- Custom session types in `src/lib/auth.ts`
-- Roles: `ALUMNO`, `INSTRUCTOR`, `ADMIN`
-- Access session: `const session = await auth()` (server) or `useSession()` (client)
-- Middleware handles route protection in `src/middleware.ts`
-
-## Language
-
-- UI text is in **Spanish** (Mexico)
-- Code (variables, functions, comments) is in **English**
-- Prisma schema and database values use Spanish terms for domain concepts
+1. **TypeScript**: Strict mode - avoid `any`, use proper types
+2. **Prisma types**: Import from `@/generated/prisma`
+3. **shadcn/ui**: Never modify `src/components/ui/*` - add via `npx shadcn@latest add`
+4. **Error messages**: Spanish for UI, English for code/comments
+5. **Auth roles**: `ALUMNO`, `INSTRUCTOR`, `ADMIN` (use `await auth()` server-side)
+6. **Validation**: Zod schemas in `src/lib/validations/` with Spanish messages
 
 ## Environment Variables
 
 Required in `.env`:
-- `DATABASE_URL` - PostgreSQL connection string
-- `AUTH_SECRET` - NextAuth secret
-- `GOOGLE_*` - Google Drive API credentials
-- `STRIPE_*` - Stripe API keys
-- `RESEND_API_KEY` - Resend email API key
+- `DATABASE_URL` - PostgreSQL connection
+- `AUTH_SECRET` / `NEXTAUTH_SECRET` - Auth.js secret
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` - OAuth
+- `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` - Payments

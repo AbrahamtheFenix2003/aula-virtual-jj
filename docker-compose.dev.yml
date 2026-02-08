@@ -22,13 +22,15 @@ services:
       - /app/node_modules
       # Excluir .next para evitar conflictos
       - /app/.next
-      # Excluir generated para evitar conflictos
-      - /app/src/generated
+      # NOTA: No excluimos src/generated - Prisma se genera en el entrypoint
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/aula_virtual_jj?schema=public
       - NEXTAUTH_URL=http://localhost:3000
       - NEXTAUTH_SECRET=development-secret-change-in-production-min-32-chars
+      # Google OAuth (configurar con tus credenciales)
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
       # Google Drive (configurar con tus credenciales)
       - GOOGLE_SERVICE_ACCOUNT_EMAIL=${GOOGLE_SERVICE_ACCOUNT_EMAIL:-}
       - GOOGLE_PRIVATE_KEY=${GOOGLE_PRIVATE_KEY:-}

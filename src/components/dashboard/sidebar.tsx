@@ -1,7 +1,11 @@
 "use client";
 
+// 1. React/Next.js
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+// 2. Third-party
 import { useSession, signOut } from "next-auth/react";
 import {
   Video,
@@ -16,13 +20,14 @@ import {
   X,
   ChevronLeft,
 } from "lucide-react";
+
+// 3. Internal (@/ alias)
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { BELT_NAMES, BELT_COLORS } from "@/types";
-import { useState } from "react";
 
 interface NavItem {
   href: string;
@@ -132,7 +137,7 @@ function Sidebar({
           )}
         >
           <Avatar className="h-9 w-9">
-            <AvatarImage src={session?.user?.image || undefined} />
+            <AvatarImage src={session?.user?.avatar || undefined} />
             <AvatarFallback className="bg-primary text-primary-foreground">
               {session?.user?.name?.charAt(0) || "U"}
             </AvatarFallback>
@@ -225,7 +230,7 @@ function MobileSidebar() {
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
-              <AvatarImage src={session?.user?.image || undefined} />
+              <AvatarImage src={session?.user?.avatar || undefined} />
               <AvatarFallback className="bg-primary text-primary-foreground">
                 {session?.user?.name?.charAt(0) || "U"}
               </AvatarFallback>

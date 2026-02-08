@@ -1,11 +1,16 @@
+// 1. React/Next.js
+import Link from "next/link";
+
+// 2. Third-party
+import { Video, Play, Clock, Filter } from "lucide-react";
+
+// 3. Internal (@/ alias)
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Video, Play, Clock, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BELT_NAMES, BELT_COLORS, VIDEO_CATEGORY_NAMES, canAccessBeltContent } from "@/types";
-import Link from "next/link";
 
 export default async function VideosPage() {
   const session = await auth();

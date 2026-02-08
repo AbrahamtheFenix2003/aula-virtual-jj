@@ -1,6 +1,11 @@
-import NextAuth from "next-auth";
-import { authConfig } from "@/lib/auth.config";
+// 1. React/Next.js
 import { NextResponse } from "next/server";
+
+// 2. Third-party
+import NextAuth from "next-auth";
+
+// 3. Internal (@/ alias)
+import { authConfig } from "@/lib/auth.config";
 
 const { auth } = NextAuth(authConfig);
 

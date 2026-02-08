@@ -1,10 +1,12 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
 import type { Role, Belt, Stripe } from "@/generated/prisma";
+import type { Adapter } from "next-auth/adapters";
 import { authConfig } from "./auth.config";
 
 declare module "next-auth" {
@@ -41,9 +43,14 @@ declare module "@auth/core/jwt" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma) as Adapter,
   session: { strategy: "jwt" },
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    }),
     Credentials({
       name: "credentials",
       credentials: {
@@ -74,6 +81,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!user || !user.isActive) return null;
 
+        // Usuarios OAuth no tienen password
+        if (!user.password) return null;
+
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) return null;
 
@@ -97,27 +107,99 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    ...authConfig.callbacks,
-    async jwt({ token, user }) {
+    async signIn({ user, account, profile }) {
+      // Para OAuth (Google), verificar/crear usuario con academia
+      if (account?.provider === "google") {
+        const email = user.email;
+        if (!email) return false;
+
+        // Buscar usuario existente
+        const existingUser = await prisma.user.findUnique({
+          where: { email },
+        });
+
+        if (!existingUser) {
+          // Obtener academia por defecto
+          const defaultAcademy = await prisma.academy.findFirst({
+            where: { slug: "academia-principal" },
+          });
+
+          if (!defaultAcademy) {
+            console.error("No se encontró la academia por defecto");
+            return false;
+          }
+
+          // Crear nuevo usuario
+          await prisma.user.create({
+            data: {
+              email,
+              name: user.name || "Usuario",
+              avatar: user.image,
+              role: "ALUMNO",
+              belt: "BLANCA",
+              stripe: "CERO",
+              academyId: defaultAcademy.id,
+              emailVerified: new Date(),
+            },
+          });
+        } else {
+          // Actualizar último login y avatar si cambió
+          await prisma.user.update({
+            where: { id: existingUser.id },
+            data: {
+              lastLogin: new Date(),
+              avatar: user.image || existingUser.avatar,
+              emailVerified: existingUser.emailVerified || new Date(),
+            },
+          });
+        }
+      }
+
+      return true;
+    },
+    async jwt({ token, user, account }) {
+      // Primer login: agregar datos del usuario al token
       if (user) {
-        token.id = user.id!;
-        token.role = user.role;
-        token.belt = user.belt;
-        token.stripe = user.stripe;
-        token.academyId = user.academyId;
+        // Buscar usuario en BD para obtener datos completos
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email! },
+          select: {
+            id: true,
+            role: true,
+            belt: true,
+            stripe: true,
+            academyId: true,
+          },
+        });
+
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+          token.belt = dbUser.belt;
+          token.stripe = dbUser.stripe;
+          token.academyId = dbUser.academyId;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.belt = token.belt;
-        session.user.stripe = token.stripe;
-        session.user.academyId = token.academyId;
+        session.user.id = token.id as string;
+        session.user.role = token.role as Role;
+        session.user.belt = token.belt as Belt;
+        session.user.stripe = token.stripe as Stripe;
+        session.user.academyId = token.academyId as string;
       }
       return session;
     },
   },
+  events: {
+    async linkAccount({ user }) {
+      // Cuando se vincula una cuenta OAuth a un usuario existente
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() },
+      });
+    },
+  },
 });
-

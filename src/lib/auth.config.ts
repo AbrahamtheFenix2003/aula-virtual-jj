@@ -1,7 +1,5 @@
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { loginSchema } from "@/lib/validations";
+import type { NextAuthConfig } from "next-auth";
+import Google from "next-auth/providers/google";
 
 export const authConfig = {
   pages: {
@@ -10,7 +8,13 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isPublicPath = ["/", "/login", "/register", "/forgot-password"].includes(nextUrl.pathname);
+      const isPublicPath = [
+        "/",
+        "/login",
+        "/register",
+        "/forgot-password",
+        "/reset-password",
+      ].includes(nextUrl.pathname);
 
       if (isPublicPath) {
         if (isLoggedIn && ["/login", "/register"].includes(nextUrl.pathname)) {
@@ -23,5 +27,10 @@ export const authConfig = {
       return true;
     },
   },
-  providers: [], // Agregados en auth.ts
-} satisfies NextAuth.AuthConfig;
+  providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+  ],
+} satisfies NextAuthConfig;
