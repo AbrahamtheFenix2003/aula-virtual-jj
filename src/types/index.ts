@@ -148,6 +148,46 @@ export const VIDEO_CATEGORY_NAMES: Record<string, string> = {
 };
 
 // ============================================
+// TIPOS DE EXAMEN
+// ============================================
+
+export const EXAM_STATUS_NAMES: Record<string, string> = {
+  PROGRAMADO: "Programado",
+  EN_CURSO: "En Curso",
+  COMPLETADO: "Completado",
+  CANCELADO: "Cancelado",
+};
+
+export const EXAM_STATUS_COLORS: Record<string, string> = {
+  PROGRAMADO: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+  EN_CURSO: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+  COMPLETADO: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+  CANCELADO: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+};
+
+export const EXAM_RESULT_NAMES: Record<string, string> = {
+  PENDIENTE: "Pendiente",
+  APROBADO: "Aprobado",
+  REPROBADO: "Reprobado",
+  NO_PRESENTADO: "No Presentado",
+};
+
+export const EXAM_RESULT_COLORS: Record<string, string> = {
+  PENDIENTE: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
+  APROBADO: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+  REPROBADO: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+  NO_PRESENTADO: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+};
+
+export const STRIPE_NAMES: Record<string, string> = {
+  CERO: "0 grados",
+  UNO: "1 grado",
+  DOS: "2 grados",
+  TRES: "3 grados",
+  CUATRO: "4 grados",
+};
+
+// ============================================
 // UTILIDADES DE TIPO
 // ============================================
 

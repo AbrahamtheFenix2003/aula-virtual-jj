@@ -20,6 +20,18 @@ Plataforma de gestión para academias de Jiu-Jitsu que permite el seguimiento de
 - [x] API de estadísticas de asistencia
 - [x] Clasificación por tipo de clase (GI, NOGI, Competición, etc.)
 
+### Sistema de Grados y Exámenes
+- [x] API de promociones de cinturón (CRUD completo)
+- [x] API de exámenes (CRUD + inscripciones + evaluación)
+- [x] Página `/grados` - Historial de promociones del alumno
+- [x] Página `/examenes` - Listado con tabs por estado
+- [x] Página `/examenes/nuevo` - Crear nuevo examen
+- [x] Página `/examenes/[id]` - Detalle con gestión de inscritos
+- [x] Página `/examenes/[id]/evaluar` - Evaluación masiva con promoción automática
+- [x] Componentes: BeltBadge, ExamCard, ExamStatusBadge, etc.
+- [x] Verificación de requisitos (asistencias mínimas, videos completados)
+- [x] Control de acceso por roles (ALUMNO, INSTRUCTOR, ADMIN)
+
 ### Biblioteca de Videos (Infraestructura Base)
 - [x] Listado de videos con filtrado automático por nivel de cinturón
 - [x] API para registro de visualizaciones (views)
@@ -46,10 +58,11 @@ Plataforma de gestión para academias de Jiu-Jitsu que permite el seguimiento de
 - [ ] Integración completa con **Stripe** (Checkout y Webhooks)
 - [ ] Panel de administración para registrar pagos manuales (Efectivo/Transferencia)
 
-### 3. Sistema de Grados y Exámenes
-- [ ] Interfaz de gestión de cinturones y grados (stripes)
-- [ ] Módulo de programación de exámenes de grado
-- [ ] Registro de inscripciones y evaluación de resultados de exámenes
+### 3. Sistema de Grados y Exámenes ✅ COMPLETADO
+- [x] Interfaz de gestión de cinturones y grados (stripes)
+- [x] Módulo de programación de exámenes de grado
+- [x] Registro de inscripciones y evaluación de resultados de exámenes
+- [x] Endpoint `/api/v1/users` con filtros por cinturón y rol
 
 ### 4. Administración y Configuración
 - [ ] Panel de control (Dashboard) con métricas para instructores

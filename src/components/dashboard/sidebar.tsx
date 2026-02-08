@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   ChevronLeft,
+  Award,
 } from "lucide-react";
 
 // 3. Internal (@/ alias)
@@ -39,8 +40,9 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: "/videos", label: "Videos", icon: Video },
   { href: "/asistencias", label: "Asistencias", icon: Calendar },
+  { href: "/grados", label: "Mi Grado", icon: Award },
+  { href: "/examenes", label: "Examenes", icon: GraduationCap },
   { href: "/pagos", label: "Pagos", icon: CreditCard },
-  { href: "/examenes", label: "Exámenes", icon: GraduationCap },
   {
     href: "/alumnos",
     label: "Alumnos",
@@ -50,7 +52,7 @@ const navItems: NavItem[] = [
   { href: "/reportes", label: "Reportes", icon: BarChart3, roles: ["ADMIN"] },
   {
     href: "/configuracion",
-    label: "Configuración",
+    label: "Configuracion",
     icon: Settings,
     roles: ["ADMIN"],
   },

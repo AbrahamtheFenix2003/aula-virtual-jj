@@ -206,14 +206,61 @@ export const createExamSchema = z.object({
 });
 
 export const registerExamStudentSchema = z.object({
-  examId: z.string(),
-  userId: z.string(),
+  studentId: z.string(),
 });
 
 export const updateExamResultSchema = z.object({
   result: z.enum(["PENDIENTE", "APROBADO", "REPROBADO", "NO_PRESENTADO"]),
   score: z.number().int().min(0).max(100).optional(),
   feedback: z.string().optional(),
+});
+
+// Evaluacion masiva de examen
+export const bulkEvaluateExamSchema = z.object({
+  evaluations: z
+    .array(
+      z.object({
+        examStudentId: z.string(),
+        result: z.enum(["APROBADO", "REPROBADO", "NO_PRESENTADO"]),
+        score: z.number().int().min(0).max(100).optional(),
+        feedback: z.string().optional(),
+      })
+    )
+    .min(1, "Debe evaluar al menos un alumno"),
+});
+
+export const updateExamSchema = z.object({
+  title: z.string().min(3).optional(),
+  date: z.coerce.date().optional(),
+  location: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  maxStudents: z.number().int().positive().optional().nullable(),
+  examFee: z.number().positive().optional().nullable(),
+  minAttendances: z.number().int().min(0).optional().nullable(),
+  minVideosCompleted: z.number().int().min(0).optional().nullable(),
+  status: z
+    .enum(["PROGRAMADO", "EN_CURSO", "COMPLETADO", "CANCELADO"])
+    .optional(),
+});
+
+// ============================================
+// VALIDACIONES DE PROMOCION
+// ============================================
+
+export const createPromotionSchema = z.object({
+  studentId: z.string(),
+  toBelt: z.enum([
+    "BLANCA",
+    "AZUL",
+    "PURPURA",
+    "MARRON",
+    "NEGRA",
+    "CORAL",
+    "ROJA",
+  ]),
+  toStripe: z.enum(["CERO", "UNO", "DOS", "TRES", "CUATRO"]),
+  notes: z.string().optional(),
+  examId: z.string().optional(),
 });
 
 // ============================================
@@ -226,3 +273,6 @@ export type CreateVideoInput = z.infer<typeof createVideoSchema>;
 export type CreateAttendanceInput = z.infer<typeof createAttendanceSchema>;
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;
 export type CreateExamInput = z.infer<typeof createExamSchema>;
+export type UpdateExamInput = z.infer<typeof updateExamSchema>;
+export type CreatePromotionInput = z.infer<typeof createPromotionSchema>;
+export type BulkEvaluateExamInput = z.infer<typeof bulkEvaluateExamSchema>;
