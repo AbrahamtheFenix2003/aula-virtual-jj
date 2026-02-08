@@ -179,6 +179,7 @@ import { cn } from "@/lib/utils";
 4. **Error messages**: Spanish for UI, English for code/comments
 5. **Auth roles**: `ALUMNO`, `INSTRUCTOR`, `ADMIN` (use `await auth()` server-side)
 6. **Validation**: Zod schemas in `src/lib/validations/` with Spanish messages
+7. **Progress Tracking**: Mantener actualizado el archivo `PROJECT_STATUS.md` al finalizar cada tarea significativa o cambio en el roadmap.
 
 ## Environment Variables
 
