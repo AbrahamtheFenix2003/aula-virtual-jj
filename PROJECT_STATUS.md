@@ -77,4 +77,4 @@ Plataforma de gestión para academias de Jiu-Jitsu que permite el seguimiento de
 - **Base de Datos**: PostgreSQL + Prisma 7
 - **Video**: YouTube (Videos "no listados" para privacidad básica)
 - **Pagos**: Stripe + Gestión manual
-- **Idioma**: UI en Español, código en Inglés (según convenciones)
+- **Idioma**: UI en Español

@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { bulkEvaluateExamSchema } from "@/lib/validations";
 import { ApiErrors } from "@/lib/api-errors";
 
-// PATCH - Evaluar estudiantes del examen
-export async function PATCH(
+// POST - Create evaluations for exam students (RESTful: creating evaluation resources)
+export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -94,7 +94,7 @@ export async function PATCH(
         if (!student) continue;
 
         // Actualizar resultado del examen
-        const updatedExamStudent = await tx.examStudent.update({
+        await tx.examStudent.update({
           where: { id: evaluation.examStudentId },
           data: {
             result: evaluation.result,
@@ -167,16 +167,19 @@ export async function PATCH(
     const failed = results.filter((r) => r.result === "REPROBADO").length;
     const noShow = results.filter((r) => r.result === "NO_PRESENTADO").length;
 
-    return NextResponse.json({
-      message: "Evaluaciones registradas",
-      data: {
-        total: results.length,
-        approved,
-        failed,
-        noShow,
-        results,
+    return NextResponse.json(
+      {
+        message: "Evaluaciones registradas",
+        data: {
+          total: results.length,
+          approved,
+          failed,
+          noShow,
+          results,
+        },
       },
-    });
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error evaluating exam:", error);
     return ApiErrors.internal("Error al evaluar examen");

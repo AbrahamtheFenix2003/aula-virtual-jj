@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ApiErrors } from "@/lib/api-errors";
+import { ApiErrors, ApiResponses } from "@/lib/api-errors";
 
 // DELETE - Eliminar asistencia
 export async function DELETE(
@@ -43,7 +43,7 @@ export async function DELETE(
       where: { id },
     });
 
-    return NextResponse.json({ message: "Asistencia eliminada" });
+    return ApiResponses.noContent();
   } catch (error) {
     console.error("Error deleting attendance:", error);
     return ApiErrors.internal("Error al eliminar asistencia");

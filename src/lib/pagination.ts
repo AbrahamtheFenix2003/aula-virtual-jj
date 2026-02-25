@@ -1,7 +1,8 @@
 /**
  * Pagination Utilities
- * 
+ *
  * Provides standardized pagination for API responses.
+ * Uses `limit` as the page-size parameter and `meta` as the response envelope key.
  */
 
 /**
@@ -9,7 +10,7 @@
  */
 export interface PaginationParams {
   page: number;
-  pageSize: number;
+  limit: number;
 }
 
 /**
@@ -17,7 +18,7 @@ export interface PaginationParams {
  */
 export interface PaginationMeta {
   page: number;
-  pageSize: number;
+  limit: number;
   total: number;
   totalPages: number;
   hasNext: boolean;
@@ -29,7 +30,7 @@ export interface PaginationMeta {
  */
 export interface PaginatedResponse<T> {
   data: T[];
-  pagination: PaginationMeta;
+  meta: PaginationMeta;
 }
 
 /**
@@ -37,39 +38,41 @@ export interface PaginatedResponse<T> {
  */
 export const PAGINATION_DEFAULTS = {
   PAGE: 1,
-  PAGE_SIZE: 20,
-  MAX_PAGE_SIZE: 100,
+  LIMIT: 20,
+  MAX_LIMIT: 100,
 } as const;
 
 /**
- * Parse pagination parameters from URL search params
+ * Parse pagination parameters from URL search params.
+ * Accepts `limit` as the primary param name, with `pageSize` as a backwards-compat fallback.
  */
 export function parsePaginationParams(
   searchParams: URLSearchParams
 ): PaginationParams {
   const pageParam = searchParams.get("page");
-  const pageSizeParam = searchParams.get("pageSize") || searchParams.get("limit");
+  const limitParam =
+    searchParams.get("limit") || searchParams.get("pageSize");
 
   let page = pageParam ? parseInt(pageParam, 10) : PAGINATION_DEFAULTS.PAGE;
-  let pageSize = pageSizeParam
-    ? parseInt(pageSizeParam, 10)
-    : PAGINATION_DEFAULTS.PAGE_SIZE;
+  let limit = limitParam
+    ? parseInt(limitParam, 10)
+    : PAGINATION_DEFAULTS.LIMIT;
 
   // Ensure valid values
   if (isNaN(page) || page < 1) {
     page = PAGINATION_DEFAULTS.PAGE;
   }
 
-  if (isNaN(pageSize) || pageSize < 1) {
-    pageSize = PAGINATION_DEFAULTS.PAGE_SIZE;
+  if (isNaN(limit) || limit < 1) {
+    limit = PAGINATION_DEFAULTS.LIMIT;
   }
 
-  // Enforce maximum page size
-  if (pageSize > PAGINATION_DEFAULTS.MAX_PAGE_SIZE) {
-    pageSize = PAGINATION_DEFAULTS.MAX_PAGE_SIZE;
+  // Enforce maximum limit
+  if (limit > PAGINATION_DEFAULTS.MAX_LIMIT) {
+    limit = PAGINATION_DEFAULTS.MAX_LIMIT;
   }
 
-  return { page, pageSize };
+  return { page, limit };
 }
 
 /**
@@ -77,14 +80,14 @@ export function parsePaginationParams(
  */
 export function calculatePagination(
   page: number,
-  pageSize: number,
+  limit: number,
   total: number
 ): PaginationMeta {
-  const totalPages = Math.ceil(total / pageSize);
+  const totalPages = Math.ceil(total / limit);
 
   return {
     page,
-    pageSize,
+    limit,
     total,
     totalPages,
     hasNext: page < totalPages,
@@ -95,8 +98,8 @@ export function calculatePagination(
 /**
  * Calculate skip value for Prisma
  */
-export function calculateSkip(page: number, pageSize: number): number {
-  return (page - 1) * pageSize;
+export function calculateSkip(page: number, limit: number): number {
+  return (page - 1) * limit;
 }
 
 /**
@@ -105,11 +108,11 @@ export function calculateSkip(page: number, pageSize: number): number {
 export function createPaginatedResponse<T>(
   data: T[],
   page: number,
-  pageSize: number,
+  limit: number,
   total: number
 ): PaginatedResponse<T> {
   return {
     data,
-    pagination: calculatePagination(page, pageSize, total),
+    meta: calculatePagination(page, limit, total),
   };
 }

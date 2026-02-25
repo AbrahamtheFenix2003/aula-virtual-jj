@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const classType = searchParams.get("classType") as ClassType | null;
 
     // Parse pagination parameters
-    const { page, pageSize } = parsePaginationParams(searchParams);
+    const { page, limit } = parsePaginationParams(searchParams);
 
     // Build where clause
     const where: Prisma.AttendanceWhereInput = {};
@@ -87,12 +87,12 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { date: "desc" },
-      skip: calculateSkip(page, pageSize),
-      take: pageSize,
+      skip: calculateSkip(page, limit),
+      take: limit,
     });
 
     return NextResponse.json(
-      createPaginatedResponse(attendances, page, pageSize, total)
+      createPaginatedResponse(attendances, page, limit, total)
     );
   } catch (error) {
     console.error("Error fetching attendances:", error);

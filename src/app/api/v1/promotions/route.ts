@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get("studentId");
-    const { page, pageSize } = parsePaginationParams(searchParams);
+    const { page, limit } = parsePaginationParams(searchParams);
 
     const where: Prisma.BeltPromotionWhereInput = {};
 
@@ -59,12 +59,12 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { promotedAt: "desc" },
-      skip: calculateSkip(page, pageSize),
-      take: pageSize,
+      skip: calculateSkip(page, limit),
+      take: limit,
     });
 
     return NextResponse.json(
-      createPaginatedResponse(promotions, page, pageSize, total)
+      createPaginatedResponse(promotions, page, limit, total)
     );
   } catch (error) {
     console.error("Error fetching promotions:", error);

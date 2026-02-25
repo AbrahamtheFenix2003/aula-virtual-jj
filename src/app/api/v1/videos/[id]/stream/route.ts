@@ -5,6 +5,7 @@ import { getVideoStream } from "@/lib/googleDrive";
 import { canAccessBeltContent } from "@/types";
 import { ApiErrors } from "@/lib/api-errors";
 
+// GET - Stream video content by video ID
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

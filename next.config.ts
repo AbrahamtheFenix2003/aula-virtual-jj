@@ -71,7 +71,7 @@ const nextConfig: NextConfig = {
       },
       // Headers para streaming de video (permitir cache)
       {
-        source: "/api/videos/stream/:path*",
+        source: "/api/v1/videos/:id/stream",
         headers: [
           {
             key: "Cache-Control",

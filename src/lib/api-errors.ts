@@ -6,6 +6,7 @@ import type { ZodError } from "zod";
  */
 export const ERROR_CODES = {
   // Client errors (4xx)
+  BAD_REQUEST: "BAD_REQUEST",
   VALIDATION_ERROR: "VALIDATION_ERROR",
   UNAUTHORIZED: "UNAUTHORIZED",
   FORBIDDEN: "FORBIDDEN",
@@ -66,7 +67,7 @@ export function createErrorResponse(
 }
 
 /**
- * Create error response from Zod validation error
+ * Create error response from Zod validation error (HTTP 422)
  */
 export function createValidationErrorResponse(
   zodError: ZodError
@@ -80,7 +81,7 @@ export function createValidationErrorResponse(
   return createErrorResponse(
     ERROR_CODES.VALIDATION_ERROR,
     "Los datos enviados son invalidos",
-    400,
+    422,
     details
   );
 }
@@ -89,6 +90,11 @@ export function createValidationErrorResponse(
  * Convenience functions for common errors
  */
 export const ApiErrors = {
+  /** 400 Bad Request — malformed JSON, missing required query params, etc. */
+  badRequest(message = "Solicitud incorrecta"): NextResponse<ApiErrorResponse> {
+    return createErrorResponse(ERROR_CODES.BAD_REQUEST, message, 400);
+  },
+
   unauthorized(message = "No autorizado"): NextResponse<ApiErrorResponse> {
     return createErrorResponse(ERROR_CODES.UNAUTHORIZED, message, 401);
   },
@@ -109,12 +115,13 @@ export const ApiErrors = {
     return createErrorResponse(ERROR_CODES.CONFLICT, message, 409);
   },
 
+  /** 422 Unprocessable Entity — validation failures (semantic errors in the payload) */
   validation(message: string, field?: string): NextResponse<ApiErrorResponse> {
     const details = field ? [{ field, message }] : undefined;
     return createErrorResponse(
       ERROR_CODES.VALIDATION_ERROR,
       message,
-      400,
+      422,
       details
     );
   },
@@ -125,5 +132,37 @@ export const ApiErrors = {
 
   fromZod(zodError: ZodError): NextResponse<ApiErrorResponse> {
     return createValidationErrorResponse(zodError);
+  },
+};
+
+/**
+ * Standard success response structure
+ */
+export interface ApiSuccessResponse<T = unknown> {
+  data: T;
+  message?: string;
+}
+
+/**
+ * Convenience functions for standard success responses
+ */
+export const ApiResponses = {
+  /** 200 OK — standard success with data */
+  ok<T>(data: T): NextResponse<ApiSuccessResponse<T>> {
+    return NextResponse.json({ data }, { status: 200 });
+  },
+
+  /** 201 Created — resource successfully created */
+  created<T>(data: T, message?: string): NextResponse<ApiSuccessResponse<T>> {
+    const body: ApiSuccessResponse<T> = { data };
+    if (message) {
+      body.message = message;
+    }
+    return NextResponse.json(body, { status: 201 });
+  },
+
+  /** 204 No Content — successful deletion, no response body */
+  noContent(): NextResponse {
+    return new NextResponse(null, { status: 204 });
   },
 };

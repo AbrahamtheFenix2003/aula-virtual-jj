@@ -28,11 +28,13 @@ export interface ApiResponse<T = unknown> {
 
 export interface PaginatedResponse<T> {
   data: T[];
-  pagination: {
-    total: number;
+  meta: {
     page: number;
     limit: number;
+    total: number;
     totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
   };
 }
 

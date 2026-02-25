@@ -129,7 +129,7 @@ export function RegisterAttendance({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/attendance", {
+      const response = await fetch("/api/v1/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -143,7 +143,7 @@ export function RegisterAttendance({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Error al registrar asistencias");
+        throw new Error(data.error?.message || "Error al registrar asistencias");
       }
 
       toast.success(data.message || "Asistencias registradas correctamente");

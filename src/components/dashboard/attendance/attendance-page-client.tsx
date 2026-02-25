@@ -9,11 +9,13 @@ import { toast } from "sonner";
 
 // 3. Internal (@/ alias)
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Belt, ClassType } from "@/generated/prisma";
+
+// 4. Relative
 import { AttendanceStats } from "./attendance-stats";
 import { AttendanceCalendar } from "./attendance-calendar";
 import { AttendanceHistory } from "./attendance-history";
 import { RegisterAttendance } from "./register-attendance";
-import type { Belt, ClassType } from "@/generated/prisma";
 
 interface AttendanceDate {
   date: string;
@@ -92,14 +94,14 @@ export function AttendancePageClient({
   const refreshData = useCallback(async () => {
     try {
       // Refresh stats
-      const statsRes = await fetch("/api/attendance/stats");
+      const statsRes = await fetch("/api/v1/attendance/stats");
       if (statsRes.ok) {
         const statsData = await statsRes.json();
         setStats(statsData.data);
       }
 
       // Refresh attendances
-      const attendancesRes = await fetch("/api/attendance?limit=50");
+      const attendancesRes = await fetch("/api/v1/attendance?limit=50");
       if (attendancesRes.ok) {
         const attendancesData = await attendancesRes.json();
         setAttendances(attendancesData.data);
@@ -115,13 +117,13 @@ export function AttendancePageClient({
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/attendance/${id}`, {
+      const response = await fetch(`/api/v1/attendance/${id}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Error al eliminar");
+        throw new Error(data.error?.message || "Error al eliminar");
       }
 
       toast.success("Asistencia eliminada");
@@ -164,7 +166,7 @@ export function AttendancePageClient({
               const monthStr = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`;
               try {
                 const res = await fetch(
-                  `/api/attendance/stats?month=${monthStr}`
+                  `/api/v1/attendance/stats?month=${monthStr}`
                 );
                 if (res.ok) {
                   const data = await res.json();

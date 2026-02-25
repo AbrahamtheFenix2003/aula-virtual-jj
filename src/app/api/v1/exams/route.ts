@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status") as ExamStatus | null;
     const beltTo = searchParams.get("beltTo") as Belt | null;
     const upcoming = searchParams.get("upcoming") === "true";
-    const { page, pageSize } = parsePaginationParams(searchParams);
+    const { page, limit } = parsePaginationParams(searchParams);
 
     const where: Prisma.ExamWhereInput = {
       academyId: session.user.academyId,
@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { date: "asc" },
-      skip: calculateSkip(page, pageSize),
-      take: pageSize,
+      skip: calculateSkip(page, limit),
+      take: limit,
     });
 
     // Transformar para incluir conteo de estudiantes
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json(
-      createPaginatedResponse(examsWithCount, page, pageSize, total)
+      createPaginatedResponse(examsWithCount, page, limit, total)
     );
   } catch (error) {
     console.error("Error fetching exams:", error);

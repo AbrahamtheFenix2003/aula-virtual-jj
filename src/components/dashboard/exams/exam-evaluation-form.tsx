@@ -107,8 +107,8 @@ export function ExamEvaluationForm({
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/v1/exams/${examId}/evaluate`, {
-        method: "PATCH",
+      const response = await fetch(`/api/v1/exams/${examId}/evaluations`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ evaluations: evaluationArray }),
       });

@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get("role") as Role | null;
     const search = searchParams.get("search");
     const isActive = searchParams.get("isActive");
-    const { page, pageSize } = parsePaginationParams(searchParams);
+    const { page, limit } = parsePaginationParams(searchParams);
 
     const where: Prisma.UserWhereInput = {
       academyId: session.user.academyId,
@@ -72,12 +72,12 @@ export async function GET(request: NextRequest) {
         createdAt: true,
       },
       orderBy: { name: "asc" },
-      skip: calculateSkip(page, pageSize),
-      take: pageSize,
+      skip: calculateSkip(page, limit),
+      take: limit,
     });
 
     return NextResponse.json(
-      createPaginatedResponse(users, page, pageSize, total)
+      createPaginatedResponse(users, page, limit, total)
     );
   } catch (error) {
     console.error("Error fetching users:", error);
