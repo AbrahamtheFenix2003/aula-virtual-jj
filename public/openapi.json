@@ -1,0 +1,2031 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Aula Virtual JJ API",
+    "description": "API para gestión de academia de Jiu-Jitsu"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Desarrollo"
+    },
+    {
+      "url": "https://tudominio.com",
+      "description": "Producción"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "NextAuth JWT token"
+      },
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "next-auth.session-token",
+        "description": "NextAuth session cookie"
+      }
+    },
+    "schemas": {},
+    "parameters": {}
+  },
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Registrar nuevo usuario",
+        "description": "Crea una nueva cuenta de alumno. Verifica que las contraseñas coincidan.",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6
+                  },
+                  "confirmPassword": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "confirmPassword"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario registrado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Usuario registrado"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string",
+                          "example": "ALUMNO"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos o email ya registrado"
+          }
+        }
+      }
+    },
+    "/api/auth/signin": {
+      "post": {
+        "summary": "Iniciar sesión",
+        "description": "Autenticación con NextAuth. Email y password.",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sesión iniciada exitosamente"
+          },
+          "401": {
+            "description": "Credenciales inválidas"
+          }
+        }
+      }
+    },
+    "/api/auth/signout": {
+      "post": {
+        "summary": "Cerrar sesión",
+        "description": "Cierra la sesión del usuario actual",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sesión cerrada exitosamente"
+          }
+        }
+      }
+    },
+    "/api/auth/session": {
+      "get": {
+        "summary": "Obtener sesión actual",
+        "description": "Obtiene la sesión del usuario autenticado",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sesión obtenida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "belt": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado"
+          }
+        }
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "summary": "Solicitar recuperación de contraseña",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email de recuperación enviado"
+          },
+          "400": {
+            "description": "Email inválido"
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "summary": "Restablecer contraseña",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "minLength": 6
+                  },
+                  "confirmPassword": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "password",
+                  "confirmPassword"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contraseña actualizada"
+          },
+          "400": {
+            "description": "Token inválido o expirado"
+          }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "summary": "Listar usuarios",
+        "description": "Obtiene lista paginada de usuarios con filtros (Solo INSTRUCTOR o ADMIN)",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "example": 1
+            },
+            "description": "Número de página"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "example": 10
+            },
+            "description": "Elementos por página"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Buscar por nombre o email"
+          },
+          {
+            "name": "belt",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BLANCA",
+                "AZUL",
+                "PURPURA",
+                "MARRON",
+                "NEGRA",
+                "CORAL",
+                "ROJA"
+              ]
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ALUMNO",
+                "INSTRUCTOR",
+                "ADMIN"
+              ]
+            }
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string"
+                          },
+                          "belt": {
+                            "type": "string"
+                          },
+                          "stripe": {
+                            "type": "string"
+                          },
+                          "isActive": {
+                            "type": "boolean"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "total": {
+                          "type": "number"
+                        },
+                        "totalPages": {
+                          "type": "number"
+                        },
+                        "hasNext": {
+                          "type": "boolean"
+                        },
+                        "hasPrev": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Forbidden - Solo instructores o admins"
+          }
+        }
+      }
+    },
+    "/api/v1/exams": {
+      "get": {
+        "summary": "Listar exámenes",
+        "description": "Obtiene lista paginada de exámenes con filtros opcionles",
+        "tags": [
+          "Exams"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "example": 10
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PROGRAMADO",
+                "EN_CURSO",
+                "COMPLETADO",
+                "CANCELADO"
+              ]
+            }
+          },
+          {
+            "name": "beltTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BLANCA",
+                "AZUL",
+                "PURPURA",
+                "MARRON",
+                "NEGRA",
+                "CORAL",
+                "ROJA"
+              ]
+            }
+          },
+          {
+            "name": "upcoming",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "example": false
+            },
+            "description": "Filtrar solo exámenes futuros"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de exámenes obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "date": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "beltFrom": {
+                            "type": "string"
+                          },
+                          "beltTo": {
+                            "type": "string"
+                          },
+                          "studentsCount": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "total": {
+                          "type": "number"
+                        },
+                        "totalPages": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear examen",
+        "description": "Crea un nuevo examen (solo INSTRUCTOR o ADMIN)",
+        "tags": [
+          "Exams"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 3
+                  },
+                  "date": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "date-time"
+                  },
+                  "location": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "beltFrom": {
+                    "type": "string",
+                    "enum": [
+                      "BLANCA",
+                      "AZUL",
+                      "PURPURA",
+                      "MARRON",
+                      "NEGRA",
+                      "CORAL",
+                      "ROJA"
+                    ]
+                  },
+                  "beltTo": {
+                    "type": "string",
+                    "enum": [
+                      "BLANCA",
+                      "AZUL",
+                      "PURPURA",
+                      "MARRON",
+                      "NEGRA",
+                      "CORAL",
+                      "ROJA"
+                    ]
+                  },
+                  "maxStudents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "examFee": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "minAttendances": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minVideosCompleted": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "title",
+                  "date",
+                  "beltFrom",
+                  "beltTo"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Examen creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Examen creado exitosamente"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "date": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos"
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Forbidden - No tienes permisos"
+          }
+        }
+      }
+    },
+    "/api/v1/exams/{id}": {
+      "get": {
+        "summary": "Obtener examen por ID",
+        "description": "Obtiene detalles completos de un examen incluyendo estudiantes inscritos",
+        "tags": [
+          "Exams"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Examen obtenido exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "date": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "students": {
+                          "type": "array"
+                        },
+                        "studentsCount": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Sin acceso al examen"
+          },
+          "404": {
+            "description": "Examen no encontrado"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Actualizar examen",
+        "description": "Actualiza un examen existente (solo INSTRUCTOR o ADMIN). No permite modificar exámenes completados.",
+        "tags": [
+          "Exams"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 3
+                  },
+                  "date": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "date-time"
+                  },
+                  "location": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "maxStudents": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "examFee": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "minAttendances": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0
+                  },
+                  "minVideosCompleted": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "PROGRAMADO",
+                      "EN_CURSO",
+                      "COMPLETADO",
+                      "CANCELADO"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Examen actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Examen actualizado"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos"
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Examen no encontrado"
+          },
+          "409": {
+            "description": "Conflicto - Examen completado"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar examen",
+        "description": "Elimina un examen (solo ADMIN). No permite eliminar exámenes completados.",
+        "tags": [
+          "Exams"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Examen eliminado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Examen eliminado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Forbidden - Solo ADMIN"
+          },
+          "404": {
+            "description": "Examen no encontrado"
+          },
+          "409": {
+            "description": "Conflicto - Examen completado"
+          }
+        }
+      }
+    },
+    "/api/v1/exams/{id}/students": {
+      "get": {
+        "summary": "Listar estudiantes inscritos en examen",
+        "description": "Obtiene lista de estudiantes inscritos con sus requisitos (asistencias y videos completados)",
+        "tags": [
+          "Exams"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de estudiantes obtenida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "user": {
+                            "type": "object"
+                          },
+                          "result": {
+                            "type": "string"
+                          },
+                          "requirements": {
+                            "type": "object",
+                            "properties": {
+                              "attendances": {
+                                "type": "object"
+                              },
+                              "videos": {
+                                "type": "object"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Sin acceso al examen"
+          },
+          "404": {
+            "description": "Examen no encontrado"
+          }
+        }
+      },
+      "post": {
+        "summary": "Inscribir estudiante en examen",
+        "description": "Inscribe un estudiante en un examen (solo INSTRUCTOR o ADMIN). Verifica cupo, cinturón requerido y que el estudiante no esté ya inscrito.",
+        "tags": [
+          "Exams"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "studentId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "studentId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Estudiante inscrito exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos"
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Examen o estudiante no encontrado"
+          },
+          "409": {
+            "description": "Ya está inscrito o cupo lleno"
+          }
+        }
+      }
+    },
+    "/api/v1/exams/{id}/students/{studentId}": {
+      "delete": {
+        "summary": "Desinscribir estudiante de examen",
+        "description": "Elimina la inscripción de un estudiante (solo INSTRUCTOR o ADMIN). No permite desinscribir si ya fue evaluado o el examen está completado.",
+        "tags": [
+          "Exams"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estudiante desinscrito del examen",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Estudiante desinscrito del examen"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Inscripción no encontrada"
+          },
+          "409": {
+            "description": "Conflicto - Ya evaluado o examen completado"
+          }
+        }
+      }
+    },
+    "/api/v1/exams/{id}/evaluations": {
+      "post": {
+        "summary": "Evaluar estudiantes de examen (bulk)",
+        "description": "Evalúa múltiples estudiantes de un examen. Si un estudiante aprueba, automáticamente crea la promoción y actualiza su cinturón. Marca el examen como COMPLETADO cuando todos son evaluados.",
+        "tags": [
+          "Exams"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "evaluations": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "examStudentId": {
+                          "type": "string"
+                        },
+                        "result": {
+                          "type": "string",
+                          "enum": [
+                            "APROBADO",
+                            "REPROBADO",
+                            "NO_PRESENTADO"
+                          ]
+                        },
+                        "score": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100
+                        },
+                        "feedback": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "examStudentId",
+                        "result"
+                      ]
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "evaluations"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Evaluaciones registradas exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Evaluaciones registradas"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number"
+                        },
+                        "approved": {
+                          "type": "number"
+                        },
+                        "failed": {
+                          "type": "number"
+                        },
+                        "noShow": {
+                          "type": "number"
+                        },
+                        "results": {
+                          "type": "array"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos"
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Examen no encontrado"
+          },
+          "409": {
+            "description": "Conflicto - Examen cancelado o completado"
+          }
+        }
+      }
+    },
+    "/api/v1/videos/{id}/views": {
+      "post": {
+        "summary": "Registrar vista de video",
+        "description": "Incrementa el contador de vistas de un video. Se debe llamar después de iniciar la reproducción del video.",
+        "tags": [
+          "Videos"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vista registrada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Vista registrada"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "videoId": {
+                          "type": "string"
+                        },
+                        "viewCount": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Video no disponible"
+          },
+          "404": {
+            "description": "Video no encontrado"
+          }
+        }
+      }
+    },
+    "/api/v1/attendance": {
+      "get": {
+        "summary": "Listar asistencias",
+        "description": "Obtiene lista paginada de asistencias con filtros",
+        "tags": [
+          "Attendance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "example": 10
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "2024-01"
+            },
+            "description": "Filtrar por mes (YYYY-MM)"
+          },
+          {
+            "name": "classType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GI",
+                "NOGI",
+                "COMPETICION",
+                "INFANTIL",
+                "FUNDAMENTALS",
+                "AVANZADO"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de asistencias obtenida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array"
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          }
+        }
+      },
+      "post": {
+        "summary": "Registrar asistencia(s)",
+        "description": "Registra una asistencia individual o múltiples (bulk)",
+        "tags": [
+          "Attendance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "userId": {
+                        "type": "string"
+                      },
+                      "date": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time"
+                      },
+                      "classType": {
+                        "type": "string",
+                        "enum": [
+                          "GI",
+                          "NOGI",
+                          "COMPETICION",
+                          "INFANTIL",
+                          "FUNDAMENTALS",
+                          "AVANZADO"
+                        ]
+                      },
+                      "classScheduleId": {
+                        "type": "string"
+                      },
+                      "notes": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "userId",
+                      "date",
+                      "classType"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "userIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1,
+                        "maxItems": 100
+                      },
+                      "date": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time"
+                      },
+                      "classType": {
+                        "type": "string",
+                        "enum": [
+                          "GI",
+                          "NOGI",
+                          "COMPETICION",
+                          "INFANTIL",
+                          "FUNDAMENTALS",
+                          "AVANZADO"
+                        ]
+                      },
+                      "classScheduleId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "userIds",
+                      "date",
+                      "classType"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Asistencia(s) registrada(s)"
+          },
+          "400": {
+            "description": "Datos inválidos"
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Conflicto - Ya existe asistencia"
+          }
+        }
+      }
+    },
+    "/api/v1/attendance/stats": {
+      "get": {
+        "summary": "Obtener estadísticas de asistencias",
+        "description": "Obtiene estadísticas detalladas de asistencias: total, asistencias del mes, racha actual, tipo de clase favorita, y fechas con asistencia para calendario",
+        "tags": [
+          "Attendance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del usuario. Si no se proporciona, usa el usuario autenticado"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estadísticas obtenidas exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "totalAttendances": {
+                          "type": "number"
+                        },
+                        "thisMonthAttendances": {
+                          "type": "number"
+                        },
+                        "currentStreak": {
+                          "type": "number"
+                        },
+                        "favoriteClassType": {
+                          "type": "string"
+                        },
+                        "attendancesByType": {
+                          "type": "array"
+                        },
+                        "attendanceDates": {
+                          "type": "array"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Forbidden - Alumnos solo pueden ver sus propias estadísticas"
+          }
+        }
+      }
+    },
+    "/api/v1/attendance/{id}": {
+      "delete": {
+        "summary": "Eliminar asistencia",
+        "description": "Elimina un registro de asistencia (solo INSTRUCTOR o ADMIN)",
+        "tags": [
+          "Attendance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Asistencia eliminada exitosamente"
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Asistencia no encontrada"
+          }
+        }
+      }
+    },
+    "/api/v1/promotions": {
+      "get": {
+        "summary": "Listar promociones de cinturón",
+        "description": "Obtiene historial de promociones con paginación",
+        "tags": [
+          "Promotions"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "example": 10
+            }
+          },
+          {
+            "name": "studentId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de promociones obtenida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array"
+                    },
+                    "meta": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          }
+        }
+      },
+      "post": {
+        "summary": "Registrar promoción de cinturón",
+        "description": "Registra una nueva promoción (solo INSTRUCTOR o ADMIN)",
+        "tags": [
+          "Promotions"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "studentId": {
+                    "type": "string"
+                  },
+                  "toBelt": {
+                    "type": "string",
+                    "enum": [
+                      "BLANCA",
+                      "AZUL",
+                      "PURPURA",
+                      "MARRON",
+                      "NEGRA",
+                      "CORAL",
+                      "ROJA"
+                    ]
+                  },
+                  "toStripe": {
+                    "type": "string",
+                    "enum": [
+                      "CERO",
+                      "UNO",
+                      "DOS",
+                      "TRES",
+                      "CUATRO"
+                    ]
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "examId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "studentId",
+                  "toBelt",
+                  "toStripe"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Promoción registrada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos"
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Alumno no encontrado"
+          }
+        }
+      }
+    },
+    "/api/v1/promotions/{id}": {
+      "get": {
+        "summary": "Obtener promoción por ID",
+        "description": "Obtiene detalles de una promoción específica. Alumnos solo pueden ver sus propias promociones.",
+        "tags": [
+          "Promotions"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Promoción obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "fromBelt": {
+                          "type": "string"
+                        },
+                        "toBelt": {
+                          "type": "string"
+                        },
+                        "promotedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "student": {
+                          "type": "object"
+                        },
+                        "promotedBy": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Sin acceso a esta promoción"
+          },
+          "404": {
+            "description": "Promoción no encontrada"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar promoción",
+        "description": "Elimina una promoción y revierte el cinturón del alumno al anterior (solo ADMIN)",
+        "tags": [
+          "Promotions"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Promoción eliminada y cinturón revertido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Promoción eliminada y cinturón revertido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Forbidden - Solo ADMIN"
+          },
+          "404": {
+            "description": "Promoción no encontrada"
+          }
+        }
+      }
+    },
+    "/api/v1/videos/{id}/stream": {
+      "get": {
+        "summary": "Obtener stream de video",
+        "description": "Obtiene el stream de video desde Google Drive. Verifica que el usuario tenga el nivel de cinturón requerido y que el video esté publicado. Soporta Range requests para seeking.",
+        "tags": [
+          "Videos"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stream de video obtenido (contenido binario)",
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "Partial Content (Range request)",
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          },
+          "403": {
+            "description": "Sin acceso - Nivel de cinturón insuficiente o video no publicado"
+          },
+          "404": {
+            "description": "Video no encontrado"
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Verifica el estado de la API",
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {
+            "description": "API saludable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
