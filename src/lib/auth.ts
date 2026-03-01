@@ -116,6 +116,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // Buscar usuario existente
         const existingUser = await prisma.user.findUnique({
           where: { email },
+          select: {
+            id: true,
+            isActive: true,
+            avatar: true,
+            emailVerified: true,
+          },
         });
 
         if (!existingUser) {
@@ -143,6 +149,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
           });
         } else {
+          // Denegar login si el usuario está inactivo
+          if (!existingUser.isActive) return false;
+
           // Actualizar último login y avatar si cambió
           await prisma.user.update({
             where: { id: existingUser.id },
