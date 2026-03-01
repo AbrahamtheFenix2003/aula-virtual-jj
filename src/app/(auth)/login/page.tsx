@@ -75,7 +75,7 @@ function LoginForm() {
 
       router.push(callbackUrl);
       router.refresh();
-    } catch (err) {
+    } catch {
       setError("Ocurrió un error. Intenta de nuevo.");
     }
   };
@@ -85,7 +85,7 @@ function LoginForm() {
     setError(null);
     try {
       await signIn("google", { callbackUrl });
-    } catch (err) {
+    } catch {
       setError("Error al iniciar sesión con Google");
       setIsGoogleLoading(false);
     }

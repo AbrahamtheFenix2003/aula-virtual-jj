@@ -17,7 +17,6 @@ import {
   Settings,
   LogOut,
   Menu,
-  X,
   ChevronLeft,
   Award,
 } from "lucide-react";

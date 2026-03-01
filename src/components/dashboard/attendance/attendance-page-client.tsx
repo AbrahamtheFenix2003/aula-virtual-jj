@@ -2,7 +2,6 @@
 
 // 1. React/Next.js
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 
 // 2. Third-party
 import { toast } from "sonner";
@@ -85,7 +84,7 @@ export function AttendancePageClient({
   userRole,
   canManage,
 }: AttendancePageClientProps) {
-  const router = useRouter();
+  void userRole;
   const [stats, setStats] = useState(initialStats);
   const [attendances, setAttendances] = useState(initialAttendances);
   const [isDeleting, setIsDeleting] = useState(false);

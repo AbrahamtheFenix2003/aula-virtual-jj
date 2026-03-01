@@ -73,7 +73,7 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push("/login");
       }, 2000);
-    } catch (err) {
+    } catch {
       setError("Ocurrió un error. Intenta de nuevo.");
     }
   };
@@ -83,7 +83,7 @@ export default function RegisterPage() {
     setError(null);
     try {
       await signIn("google", { callbackUrl: "/videos" });
-    } catch (err) {
+    } catch {
       setError("Error al registrarse con Google");
       setIsGoogleLoading(false);
     }

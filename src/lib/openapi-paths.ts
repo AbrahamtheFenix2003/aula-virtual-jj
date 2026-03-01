@@ -7,17 +7,10 @@ import {
   createExamSchema,
   updateExamSchema,
   registerExamStudentSchema,
-  updateExamResultSchema,
   bulkEvaluateExamSchema,
   createAttendanceSchema,
   bulkAttendanceSchema,
   createPromotionSchema,
-  createVideoSchema,
-  updateVideoProgressSchema,
-  createPaymentSchema,
-  updateUserSchema,
-  updateUserRoleSchema,
-  updateUserBeltSchema,
 } from "./validations";
 
 // ============================================

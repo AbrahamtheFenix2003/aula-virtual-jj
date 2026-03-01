@@ -5,7 +5,6 @@ import { es } from "date-fns/locale";
 import { ArrowRight, Award, Calendar, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BeltBadge, BeltIndicator } from "./belt-badge";
-import { STRIPE_NAMES } from "@/types";
 import type { Belt, Stripe } from "@/generated/prisma";
 
 interface Promotion {

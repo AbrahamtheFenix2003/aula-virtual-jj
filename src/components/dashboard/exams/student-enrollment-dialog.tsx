@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Loader2, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -49,14 +49,7 @@ export function StudentEnrollmentDialog({
   const [students, setStudents] = useState<EligibleStudent[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Cargar estudiantes elegibles cuando se abre el dialog
-  useEffect(() => {
-    if (open) {
-      loadEligibleStudents();
-    }
-  }, [open, beltFrom]);
-
-  const loadEligibleStudents = async () => {
+  const loadEligibleStudents = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/v1/users?belt=${beltFrom}&role=ALUMNO`);
@@ -69,7 +62,14 @@ export function StudentEnrollmentDialog({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [beltFrom]);
+
+  // Cargar estudiantes elegibles cuando se abre el dialog
+  useEffect(() => {
+    if (open) {
+      loadEligibleStudents();
+    }
+  }, [open, loadEligibleStudents]);
 
   const filteredStudents = students.filter(
     (student) =>

@@ -48,7 +48,7 @@ function ResetPasswordForm() {
         const result = await response.json();
         
         setIsValidToken(result.valid);
-      } catch (err) {
+      } catch {
         setIsValidToken(false);
       } finally {
         setIsValidating(false);
@@ -84,7 +84,7 @@ function ResetPasswordForm() {
       setTimeout(() => {
         router.push("/login");
       }, 3000);
-    } catch (err) {
+    } catch {
       setError("Ocurrió un error. Intenta de nuevo.");
     }
   };

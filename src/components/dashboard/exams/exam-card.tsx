@@ -39,9 +39,6 @@ export function ExamCard({
   maxStudents,
 }: ExamCardProps) {
   const examDate = typeof date === "string" ? new Date(date) : date;
-  const isPast = examDate < new Date();
-  const isCompleted = status === "COMPLETADO";
-  const isCancelled = status === "CANCELADO";
 
   return (
     <Link href={`/examenes/${id}`}>

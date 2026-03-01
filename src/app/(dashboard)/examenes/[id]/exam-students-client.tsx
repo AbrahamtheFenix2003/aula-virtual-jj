@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -55,12 +54,10 @@ export function ExamStudentsClient({
   showResults,
 }: ExamStudentsClientProps) {
   const router = useRouter();
-  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const enrolledStudentIds = students.map((s) => s.userId);
 
   const handleRemove = async (studentId: string) => {
-    setRemovingId(studentId);
     try {
       const response = await fetch(
         `/api/v1/exams/${examId}/students/${studentId}`,
@@ -78,8 +75,6 @@ export function ExamStudentsClient({
       toast.error(
         error instanceof Error ? error.message : "Error al desinscribir"
       );
-    } finally {
-      setRemovingId(null);
     }
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import {
   Table,
   TableBody,

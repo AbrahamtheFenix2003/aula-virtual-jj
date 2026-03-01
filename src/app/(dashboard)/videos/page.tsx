@@ -1,5 +1,6 @@
 // 1. React/Next.js
 import Link from "next/link";
+import Image from "next/image";
 
 // 2. Third-party
 import { Video, Play, Clock, Filter } from "lucide-react";
@@ -119,9 +120,12 @@ export default async function VideosPage() {
                   {/* Thumbnail */}
                   <div className="relative aspect-video bg-muted">
                     {video.thumbnail ? (
-                      <img
+                      <Image
                         src={video.thumbnail}
                         alt={video.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                        unoptimized
                         className="object-cover w-full h-full"
                       />
                     ) : (

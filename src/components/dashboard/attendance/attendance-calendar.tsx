@@ -1,7 +1,7 @@
 "use client";
 
 // 1. React/Next.js
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 // 2. Third-party
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -48,12 +48,11 @@ export function AttendanceCalendar({
   onMonthChange,
 }: AttendanceCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [today, setToday] = useState<string | null>(null);
-
-  // Set today's date only on client to avoid hydration mismatch
-  useEffect(() => {
-    setToday(format(new Date(), "yyyy-MM-dd"));
-  }, []);
+  const today = useSyncExternalStore(
+    () => () => {},
+    () => format(new Date(), "yyyy-MM-dd"),
+    () => null
+  );
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
