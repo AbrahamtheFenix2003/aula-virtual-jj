@@ -18,13 +18,20 @@ export async function GET() {
   } catch (error) {
     console.error("Health check failed:", error);
 
+    const errorMessage =
+      process.env.NODE_ENV === "production"
+        ? undefined
+        : error instanceof Error
+          ? error.message
+          : "Unknown error";
+
     return NextResponse.json(
       {
         status: "unhealthy",
         version: "1.0.0",
         timestamp: new Date().toISOString(),
         database: "disconnected",
-        error: error instanceof Error ? error.message : "Unknown error",
+        ...(errorMessage ? { error: errorMessage } : {}),
       },
       { status: 503 }
     );

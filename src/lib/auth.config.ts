@@ -28,8 +28,9 @@ const AUTH_ONLY_PAGES = new Set(["/login", "/register"]);
  *  - /api/docs    → Scalar API reference UI (dev convenience)
  *  - /api/openapi → OpenAPI JSON spec (consumed by /api/docs)
  */
-const PUBLIC_API_PREFIXES = ["/api/auth/", "/api/auth"];
+const PUBLIC_API_PREFIXES = ["/api/auth/"];
 const PUBLIC_API_EXACT = new Set([
+  "/api/auth",
   "/api/v1/health",
   "/api/docs",
   "/api/openapi",
@@ -70,12 +71,14 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const authUser = auth?.user as { isActive?: boolean } | undefined;
+      const isUserActive = authUser ? authUser.isActive !== false : false;
       const { pathname } = nextUrl;
 
       // ── Public routes ──────────────────────────────────
       if (isPublicRoute(pathname)) {
         // Redirect already-authenticated users away from login/register
-        if (isLoggedIn && AUTH_ONLY_PAGES.has(pathname)) {
+        if (isLoggedIn && isUserActive && AUTH_ONLY_PAGES.has(pathname)) {
           return Response.redirect(new URL("/videos", nextUrl));
         }
         return true;
@@ -83,15 +86,18 @@ export const authConfig = {
 
       // ── Private routes ─────────────────────────────────
       // For API routes, return a 401 JSON response instead of redirect
-      if (!isLoggedIn && pathname.startsWith("/api/")) {
+      if ((!isLoggedIn || !isUserActive) && pathname.startsWith("/api/")) {
         return Response.json(
-          { error: "No autorizado" },
-          { status: 401, headers: { "Content-Type": "application/json" } },
+          { error: isLoggedIn ? "Usuario inactivo" : "No autorizado" },
+          {
+            status: isLoggedIn ? 403 : 401,
+            headers: { "Content-Type": "application/json" },
+          },
         );
       }
 
       // For pages, returning false triggers redirect to signIn page
-      if (!isLoggedIn) return false;
+      if (!isLoggedIn || !isUserActive) return false;
 
       return true;
     },

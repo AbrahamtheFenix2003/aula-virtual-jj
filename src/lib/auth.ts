@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
+import type { Adapter } from "next-auth/adapters";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
@@ -12,8 +13,10 @@ import {
 } from "@/lib/loginLockout";
 import { getClientIP } from "@/lib/rate-limit";
 import type { Role, Belt, Stripe } from "@/generated/prisma";
-import type { Adapter } from "next-auth/adapters";
 import { authConfig } from "./auth.config";
+import { sanitizeCallbackUrl } from "./url";
+
+const IS_ACTIVE_RECHECK_MS = 5 * 60 * 1000;
 
 declare module "next-auth" {
   interface Session {
@@ -25,6 +28,7 @@ declare module "next-auth" {
       belt: Belt;
       stripe: Stripe;
       academyId: string;
+      isActive: boolean;
       avatar?: string | null;
     };
   }
@@ -34,6 +38,7 @@ declare module "next-auth" {
     belt: Belt;
     stripe: Stripe;
     academyId: string;
+    isActive: boolean;
   }
 }
 
@@ -44,6 +49,8 @@ declare module "@auth/core/jwt" {
     belt: Belt;
     stripe: Stripe;
     academyId: string;
+    isActive: boolean;
+    isActiveCheckedAt: number;
   }
 }
 
@@ -113,6 +120,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             prisma.user.update({
               where: { id: user.id },
               data: { lastLogin: new Date() },
+              select: { id: true },
             }),
           ]);
         } catch (housekeepingError) {
@@ -130,13 +138,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           belt: user.belt,
           stripe: user.stripe,
           academyId: user.academyId,
+          isActive: user.isActive,
           image: user.avatar,
         };
       },
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       // Para OAuth (Google), verificar/crear usuario con academia
       if (account?.provider === "google") {
         const email = user.email;
@@ -157,6 +166,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           // Obtener academia por defecto
           const defaultAcademy = await prisma.academy.findFirst({
             where: { slug: "academia-principal" },
+            select: { id: true },
           });
 
           if (!defaultAcademy) {
@@ -176,6 +186,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               academyId: defaultAcademy.id,
               emailVerified: new Date(),
             },
+            select: { id: true },
           });
         } else {
           // Denegar login si el usuario está inactivo
@@ -189,13 +200,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               avatar: user.image || existingUser.avatar,
               emailVerified: existingUser.emailVerified || new Date(),
             },
+            select: { id: true },
           });
         }
       }
 
       return true;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
+      const now = Date.now();
+
       // Primer login: agregar datos del usuario al token
       if (user) {
         // Buscar usuario en BD para obtener datos completos
@@ -207,6 +221,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             belt: true,
             stripe: true,
             academyId: true,
+            isActive: true,
           },
         });
 
@@ -216,8 +231,47 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.belt = dbUser.belt;
           token.stripe = dbUser.stripe;
           token.academyId = dbUser.academyId;
+          token.isActive = dbUser.isActive;
+          token.isActiveCheckedAt = now;
+        }
+
+        return token;
+      }
+
+      const tokenEmail = typeof token.email === "string" ? token.email : null;
+      const shouldRefreshActiveStatus =
+        !!tokenEmail &&
+        (typeof token.isActive !== "boolean" ||
+          typeof token.isActiveCheckedAt !== "number" ||
+          now - token.isActiveCheckedAt > IS_ACTIVE_RECHECK_MS);
+
+      if (shouldRefreshActiveStatus && tokenEmail) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: tokenEmail },
+          select: {
+            id: true,
+            role: true,
+            belt: true,
+            stripe: true,
+            academyId: true,
+            isActive: true,
+          },
+        });
+
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+          token.belt = dbUser.belt;
+          token.stripe = dbUser.stripe;
+          token.academyId = dbUser.academyId;
+          token.isActive = dbUser.isActive;
+          token.isActiveCheckedAt = now;
+        } else {
+          token.isActive = false;
+          token.isActiveCheckedAt = now;
         }
       }
+
       return token;
     },
     async session({ session, token }) {
@@ -227,8 +281,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.belt = token.belt as Belt;
         session.user.stripe = token.stripe as Stripe;
         session.user.academyId = token.academyId as string;
+        session.user.isActive = token.isActive === true;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) {
+        return sanitizeCallbackUrl(url);
+      }
+
+      try {
+        const parsed = new URL(url);
+
+        if (parsed.origin !== baseUrl) {
+          return sanitizeCallbackUrl(null);
+        }
+
+        return sanitizeCallbackUrl(`${parsed.pathname}${parsed.search}${parsed.hash}`);
+      } catch {
+        return sanitizeCallbackUrl(null);
+      }
     },
   },
   events: {
@@ -237,6 +309,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       await prisma.user.update({
         where: { id: user.id },
         data: { emailVerified: new Date() },
+        select: { id: true },
       });
     },
   },
