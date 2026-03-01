@@ -399,6 +399,21 @@ model BeltPromotion {
 // MODELOS AUXILIARES - AUTH
 // ============================================
 
+model LoginAttempt {
+  id             String    @id @default(cuid())
+  email          String
+  ipAddress      String
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  lastAttemptAt  DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([email, ipAddress])
+  @@index([email])
+  @@index([lockedUntil])
+}
+
 model VerificationToken {
   identifier String
   token      String   @unique

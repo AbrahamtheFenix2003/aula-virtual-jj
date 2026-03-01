@@ -5,6 +5,12 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
+import {
+  checkLoginLockout,
+  recordFailedLogin,
+  clearLoginAttempts,
+} from "@/lib/loginLockout";
+import { getClientIP } from "@/lib/rate-limit";
 import type { Role, Belt, Stripe } from "@/generated/prisma";
 import type { Adapter } from "next-auth/adapters";
 import { authConfig } from "./auth.config";
@@ -57,11 +63,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
+        const ip = getClientIP(request);
+
+        // Rate limiting: check lockout BEFORE any DB lookup or bcrypt
+        const lockout = await checkLoginLockout(email, ip);
+        if (lockout.locked) {
+          // Reject immediately — generic message, no user enumeration
+          return null;
+        }
 
         const user = await prisma.user.findUnique({
           where: { email },
@@ -79,19 +93,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           },
         });
 
-        if (!user || !user.isActive) return null;
-
-        // Usuarios OAuth no tienen password
-        if (!user.password) return null;
+        // Generic failure: user not found, inactive, or no password (OAuth-only)
+        if (!user || !user.isActive || !user.password) {
+          await recordFailedLogin(email, ip);
+          return null;
+        }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
-        if (!passwordMatch) return null;
+        if (!passwordMatch) {
+          await recordFailedLogin(email, ip);
+          return null;
+        }
 
-        // Actualizar último login
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLogin: new Date() },
-        });
+        // Login exitoso: limpiar intentos fallidos y actualizar último login
+        // Wrapped in try/catch so housekeeping failures never block a valid login
+        try {
+          await Promise.all([
+            clearLoginAttempts(email, ip),
+            prisma.user.update({
+              where: { id: user.id },
+              data: { lastLogin: new Date() },
+            }),
+          ]);
+        } catch (housekeepingError) {
+          console.error(
+            "Non-critical: post-login housekeeping failed",
+            housekeepingError,
+          );
+        }
 
         return {
           id: user.id,

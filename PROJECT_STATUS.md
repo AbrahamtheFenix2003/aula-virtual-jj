@@ -9,6 +9,7 @@ Plataforma de gestión para academias de Jiu-Jitsu que permite el seguimiento de
 
 ### Autenticación y Usuarios
 - [x] Login con credenciales (email/password)
+- [x] Protección de login con rate limiting persistente y lockout temporal (email + IP)
 - [x] Registro de nuevos alumnos
 - [x] Recuperación y reajuste de contraseña
 - [x] Integración con NextAuth.js (soporta Google OAuth)
