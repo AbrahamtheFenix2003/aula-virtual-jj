@@ -1,68 +1,18 @@
-// 1. React/Next.js
-import { NextResponse } from "next/server";
-
-// 2. Third-party
 import NextAuth from "next-auth";
-
-// 3. Internal (@/ alias)
 import { authConfig } from "@/lib/auth.config";
 
 const { auth } = NextAuth(authConfig);
 
-// Rutas públicas que no requieren autenticación
-const publicRoutes = ["/", "/login", "/register", "/forgot-password"];
-
-// Rutas que requieren rol específico
-const adminRoutes = ["/reportes", "/configuracion"];
-const instructorRoutes = ["/alumnos", ...adminRoutes];
-
-export default auth((req) => {
-  const { nextUrl } = req;
-  const isLoggedIn = !!req.auth;
-  const pathname = nextUrl.pathname;
-
-  // Permitir rutas públicas
-  if (publicRoutes.includes(pathname)) {
-    // Si está logueado y trata de ir a login/register, redirigir al dashboard
-    if (isLoggedIn && ["/login", "/register"].includes(pathname)) {
-      return NextResponse.redirect(new URL("/videos", nextUrl));
-    }
-    return NextResponse.next();
-  }
-
-  // Rutas de API
-  if (pathname.startsWith("/api")) {
-    return NextResponse.next();
-  }
-
-  // Rutas protegidas - requieren autenticación
-  if (!isLoggedIn) {
-    const callbackUrl = encodeURIComponent(pathname);
-    return NextResponse.redirect(
-      new URL(`/login?callbackUrl=${callbackUrl}`, nextUrl)
-    );
-  }
-
-  const userRole = req.auth?.user?.role as string;
-
-  // Verificar acceso a rutas de instructor
-  if (instructorRoutes.some((route) => pathname.startsWith(route))) {
-    if (userRole !== "INSTRUCTOR" && userRole !== "ADMIN") {
-      return NextResponse.redirect(new URL("/videos", nextUrl));
-    }
-  }
-
-  // Verificar acceso a rutas de admin
-  if (adminRoutes.some((route) => pathname.startsWith(route))) {
-    if (userRole !== "ADMIN") {
-      return NextResponse.redirect(new URL("/videos", nextUrl));
-    }
-  }
-
-  return NextResponse.next();
-});
+/**
+ * Next.js 16 proxy entrypoint for global auth enforcement.
+ *
+ * Reuses `authConfig.callbacks.authorized` so public/private route rules live
+ * in one place and are applied consistently to pages and API routes.
+ */
+export default auth;
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 };
-
